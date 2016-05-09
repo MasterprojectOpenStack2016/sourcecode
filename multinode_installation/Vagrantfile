@@ -1,18 +1,41 @@
 Vagrant.configure("2") do |config|
   region_ids = Array((1..1))
-  region_ids.each do |region_id| 
+  region_ids.each do |region_id|
     config.vm.define "region#{region_id}" do |region|
-      # region.vm.box = "yk0/ubuntu-xenial"
-      # region.vm.provider :libvirt do |domain|
-      #   domain.memory = 26000
-      #   domain.cpus = 16
-      #   domain.nested = true
-      #   domain.volume_cache = 'none'
-      # end
+#      region.vm.box = "yk0/ubuntu-xenial"
+#      region.vm.provider :libvirt do |domain|
+#        domain.memory = 26000
+#        domain.cpus = 16
+#        domain.nested = true
+#        domain.volume_cache = 'none'
+#      end
       region.vm.box = "ubuntu/xenial64"
       region.vm.provider :virtualbox do |domain|
-        domain.memory = 4000
-        domain.cpus = 2
+        domain.memory = 26000
+        domain.cpus = 16
+
+        domain.customize [
+            "clonehd", "#{ENV["HOME"]}/VirtualBox VMs/ubuntu-xenial-16.04-cloudimg/ubuntu-xenial-16.04-cloudimg.vmdk", 
+                       "#{ENV["HOME"]}/VirtualBox VMs/ubuntu-xenial-16.04-cloudimg/ubuntu.vdi", 
+            "--format", "VDI"
+        ]
+        domain.customize [
+            "modifyhd", "#{ENV["HOME"]}/VirtualBox VMs/ubuntu-xenial-16.04-cloudimg/ubuntu.vdi",
+            "--resize", 70 * 1024
+        ]
+        domain.customize [
+            "storageattach", :id, 
+            "--storagectl", "SCSI Controller", 
+            "--port", "0", 
+            "--device", "0", 
+            "--type", "hdd",
+            "--nonrotational", "on",
+            "--medium", "#{ENV["HOME"]}/VirtualBox VMs/ubuntu-xenial-16.04-cloudimg/ubuntu.vdi" 
+        ]
+        domain.customize [
+            "closemedium", "disk", "#{ENV["HOME"]}/VirtualBox VMs/ubuntu-xenial-16.04-cloudimg/ubuntu-xenial-16.04-cloudimg.vmdk",
+            "--delete"
+        ]
       end
       region.vm.network :private_network, :ip => "192.168.123.#{100 + region_id}", :libvirt__forward_mode => 'none'
       region.vm.provision :shell, path: "provision.sh"
