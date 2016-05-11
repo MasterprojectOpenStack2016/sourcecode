@@ -15,28 +15,30 @@ Vagrant.configure("2") do |config|
         domain.cpus = 16
         domain.name = "region#{region_id}-trusty"
 
-        domain.customize [
-            "clonehd", "#{ENV["HOME"]}/VirtualBox VMs/#{domain.name}/#{domain.name}.vmdk",
-                       "#{ENV["HOME"]}/VirtualBox VMs/#{domain.name}/#{domain.name}.vdi",
-            "--format", "VDI"
-        ]
-        domain.customize [
-            "modifyhd", "#{ENV["HOME"]}/VirtualBox VMs/#{domain.name}/#{domain.name}.vdi",
-            "--resize", 70 * 1024
-        ]
-        domain.customize [
-            "storageattach", :id,
-            "--storagectl", "SCSI Controller",
-            "--port", "0",
-            "--device", "0",
-            "--type", "hdd",
-            "--nonrotational", "on",
-            "--medium", "#{ENV["HOME"]}/VirtualBox VMs/#{domain.name}/#{domain.name}.vdi"
-        ]
-        domain.customize [
-            "closemedium", "disk", "#{ENV["HOME"]}/VirtualBox VMs/#{domain.name}/#{domain.name}.vmdk",
-            "--delete"
-        ]
+        unless File.exists?("#{ENV["HOME"]}/VirtualBox VMs/#{domain.name}/#{domain.name}.vdi")
+          domain.customize [
+              "clonehd", "#{ENV["HOME"]}/VirtualBox VMs/#{domain.name}/box-disk1.vmdk",
+                         "#{ENV["HOME"]}/VirtualBox VMs/#{domain.name}/#{domain.name}.vdi",
+              "--format", "VDI"
+          ]
+          domain.customize [
+              "modifyhd", "#{ENV["HOME"]}/VirtualBox VMs/#{domain.name}/#{domain.name}.vdi",
+              "--resize", 70 * 1024
+          ]
+          domain.customize [
+              "storageattach", :id,
+              "--storagectl", "SATAController",
+              "--port", "0",
+              "--device", "0",
+              "--type", "hdd",
+              "--nonrotational", "on",
+              "--medium", "#{ENV["HOME"]}/VirtualBox VMs/#{domain.name}/#{domain.name}.vdi"
+          ]
+          domain.customize [
+              "closemedium", "disk", "#{ENV["HOME"]}/VirtualBox VMs/#{domain.name}/box-disk1.vmdk",
+              "--delete"
+          ]
+        end
       end
       region.vm.network :private_network, :ip => "192.168.124.#{100 + region_id}", :libvirt__forward_mode => 'none'
       region.vm.provision :shell, path: "provision.sh"
