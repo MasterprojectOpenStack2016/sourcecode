@@ -25,3 +25,5 @@ HORIZON_IP=$(sudo lxc-info -n aio1_horizon_container-26dfeeed -iH | tail -n1)
 VM_IP=$(ip -f inet -o addr show eth1|cut -d\  -f 7 | cut -d/ -f 1)
 sudo iptables -t nat -A PREROUTING -i eth0 -p tcp --dport 443 -j DNAT --to-destination $HORIZON_IP
 sudo iptables -t nat -A POSTROUTING -o eth1 -p tcp --dport 443 -d $HORIZON_IP -j SNAT --to-source $VM_IP
+sudo iptables-save | sudo tee /etc/iptables/rules.v4
+
